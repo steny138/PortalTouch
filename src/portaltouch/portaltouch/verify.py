@@ -9,6 +9,10 @@ firebase_admin.initialize_app(cred)
 
 verify_api = Blueprint('verify-api', __name__, url_prefix='/verify')
 
+# export GRPC_PYTHON_BUILD_SYSTEM_OPENSSL=1
+# export GRPC_PYTHON_BUILD_SYSTEM_ZLIB=1
+#  for install firebase-admin
+
 
 @verify_api.route('/login')
 def verify_login():

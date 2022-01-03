@@ -1,13 +1,40 @@
 {% extends 'base.html' %}
 
 {% block header %}
-  <h1>{% block title %}Input Phone Number{% endblock %}</h1>
+<h1>{% block title %}Input Phone Number{% endblock %}</h1>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 {% endblock %}
 
 {% block content %}
-  <form method="post" action="phone">
-    <label for="phone">Phone Number</label>
-    <input name="phone" id="phone" required>
-    <input type="submit" value="send">
-  </form>
+<form method="post" action="phone">
+  <label for="phone">Phone Number</label>
+  <input name="phone" id="phone" required>
+  <input type="button" value="send" @click="phone_send()">
+
+  <label for="code">Vefify Code</label>
+  <input name="code" id="code" required>
+  <input type="button" value="send">
+</form>
+
+<script type="text/javascript">
+  const axios = require('axios').default;
+  async function phone_send() {
+    try {
+      const response = await axios.get('/user?ID=12345');
+      console.log(response);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+</script>
+
+<script type="text/javascript">
+  liff.init({
+    liffId: '{{liff-id}}', // Use own liffId
+    withLoginOnExternalBrowser: true, // Enable automatic login process
+  }).then(() => {
+    // Start to use liff's api
+  });
+</script>
 {% endblock %}
