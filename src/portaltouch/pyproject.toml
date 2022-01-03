@@ -9,6 +9,7 @@ license = "Apache 2.0"
 python = "^3.8"
 requests = "^2.26.0"
 line-bot-sdk = "^2.0.1"
+firebase-admin = "^5.2.0"
 
 [tool.poetry.dev-dependencies]
 Flask = "^2.0.2"
