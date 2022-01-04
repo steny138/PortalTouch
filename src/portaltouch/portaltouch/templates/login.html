@@ -1,40 +1,131 @@
 {% extends 'base.html' %}
 
-{% block header %}
-<h1>{% block title %}Input Phone Number{% endblock %}</h1>
+{% block head %}
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-<script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script type="module" src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
+{% endblock %}
+
+{% block header %}
+<h2>{% block title %}Input Phone Number{% endblock %}</h2>
 {% endblock %}
 
 {% block content %}
 <form method="post" action="phone">
-  <label for="phone">Phone Number</label>
-  <input name="phone" id="phone" required>
-  <input type="button" value="send" @click="phone_send()">
+  <div class="mb-3">
+    <label for="phone">Phone Number</label>
+    <input name="phone" id="phone" required>
+    <input type="button" value="send" onclick="phone_user();">
+  </div><br />
+  <div class="mb-3">
+    <label for="code">Vefify Code</label>
+    <input name="code" id="code" required>
+    <input type="button" value="send" onclick="verify_code();">
+  </div>
 
-  <label for="code">Vefify Code</label>
-  <input name="code" id="code" required>
-  <input type="button" value="send">
+  <div id="recaptcha-container" data-sitekey="6LcsaxsdAAAAAEBn0sPDCEncnU9564MisyRuDzD_" data-callback="sendForm"
+    data-size="invisible">
+  </div>
 </form>
 
 <script type="text/javascript">
-  const axios = require('axios').default;
-  async function phone_send() {
-    try {
-      const response = await axios.get('/user?ID=12345');
-      console.log(response);
-    } catch (error) {
-      console.error(error);
-    }
-  }
+  // const axios = require('axios').default;
+  // async function phone_send() {
+  //   try {
+  //     const response = await axios.get('/user?ID=12345');
+  //     console.log(response);
+  //   } catch (error) {
+  //     console.error(error);
+  //   }
+  // }
 </script>
 
 <script type="text/javascript">
   liff.init({
-    liffId: '{{liff-id}}', // Use own liffId
+    liffId: '{{ liff_id }}', // Use own liffId
     withLoginOnExternalBrowser: true, // Enable automatic login process
   }).then(() => {
     // Start to use liff's api
   });
 </script>
+
+<script type="module">
+  import {initializeApp} from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
+  import {getAuth, signInWithPhoneNumber, RecaptchaVerifier} from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js';
+  
+  const firebaseConfig = {
+    apiKey: "AIzaSyCbak6qVQXq7dXcUH5rQJyaQIYtbgxFHeo",
+    authDomain: "portaltouch-7b27e.firebaseapp.com",
+    projectId: "portaltouch-7b27e",
+    storageBucket: "portaltouch-7b27e.appspot.com",
+    messagingSenderId: "782989749565",
+    appId: "1:782989749565:web:f462c480791ff2ef9ea954"
+  };
+
+  initializeApp(firebaseConfig);
+  const auth = getAuth();
+  let appVerifier;
+  let confirmationCodeResult;
+ 
+  const phone_user = () => {
+    const phoneNumber= document.getElementById("phone").value.replace(/^09/,"+8869");
+
+    if (appVerifier === undefined){
+      appVerifier = new RecaptchaVerifier('recaptcha-container', {
+        'size': 'invisible',
+        'callback': (response) => {
+          console.log(response);
+          // reCAPTCHA solved, allow signInWithPhoneNumber.
+          // ...
+        },
+        'expired-callback': () => {
+          // Response expired. Ask user to solve reCAPTCHA again.
+          // ...
+        }
+      }, auth);
+    }
+
+    signInWithPhoneNumber(auth, phoneNumber, appVerifier)
+      .then((confirmationResult) => {
+        // SMS sent. Prompt user to type the code from the message, then sign the
+        // user in with confirmationResult.confirm(code).
+        confirmationCodeResult = confirmationResult;
+        console.log(confirmationResult);
+        // ...
+      }).catch((error) => {
+        // Error; SMS not sent
+        console.log(error);
+      });
+  };
+  
+  const verify_code = async () =>{
+    const code = document.getElementById("code").value;
+
+    var result = await confirmationCodeResult.confirm(code);
+    
+    console.log(result.user.accessToken);
+
+    // send request to server
+    const axios = require('axios').default;
+
+    axios.get(`/verify/code?token=${result.user.accessToken}`)
+      .then(function (response) {
+        // handle success
+        console.log(response);
+      })
+      .catch(function (error) {
+        // handle error
+        console.log(error);
+      })
+      .then(function () {
+        // always executed
+      });
+  }
+
+  window.phone_user = phone_user;
+  window.verify_code = verify_code;
+
+  export { phone_user, verify_code }
+</script>
+
 {% endblock %}

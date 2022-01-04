@@ -1,11 +1,7 @@
+import os
 from flask.blueprints import Blueprint
 from flask import current_app, render_template, request
-
-import firebase_admin
-from firebase_admin import credentials
-
-cred = credentials.Certificate("portaltouch-firebase.json")
-firebase_admin.initialize_app(cred)
+from firebase_admin.auth import create_custom_token
 
 verify_api = Blueprint('verify-api', __name__, url_prefix='/verify')
 
@@ -16,15 +12,17 @@ verify_api = Blueprint('verify-api', __name__, url_prefix='/verify')
 
 @verify_api.route('/login')
 def verify_login():
-    return render_template('login.html')
+    return render_template('login.html',
+                           liff_id=current_app.config["LIFF_ID"])
 
 
-@verify_api.post('/phone')
+@ verify_api.post('/phone')
 def verify_phone():
     param = request.values["phone"]
     return f'Hello, World! {param}'
 
 
-@verify_api.route('/code')
+@ verify_api.route('/code')
 def verify_code():
-    return 'Hello, World!'
+    param = request.values["token"]
+    return f'Hello, World! {param}'
