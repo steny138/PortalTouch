@@ -20,4 +20,3 @@ filename = os.path.join(app.instance_path, "portaltouch-firebase.json")
 
 cred = credentials.Certificate(filename)
 firebase_app = firebase_admin.initialize_app(cred)
-print(firebase_app.name)

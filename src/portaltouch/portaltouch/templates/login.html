@@ -1,9 +1,8 @@
 {% extends 'base.html' %}
 
 {% block head %}
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-<script type="module" src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 {% endblock %}
 
 {% block header %}
@@ -41,91 +40,96 @@
 </script>
 
 <script type="text/javascript">
-  liff.init({
-    liffId: '{{ liff_id }}', // Use own liffId
-    withLoginOnExternalBrowser: true, // Enable automatic login process
-  }).then(() => {
-    // Start to use liff's api
-  });
+
+
 </script>
 
 <script type="module">
   import {initializeApp} from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
   import {getAuth, signInWithPhoneNumber, RecaptchaVerifier} from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js';
+  liff.init({
+    liffId: '{{ liff_id }}', // Use own liffId
+    withLoginOnExternalBrowser: true, // Enable automatic login process
+  }).then(() => {
+    const firebaseConfig = {
+      apiKey: "{{ api_key }}",
+      authDomain: "portaltouch-7b27e.firebaseapp.com",
+      projectId: "portaltouch-7b27e",
+      storageBucket: "portaltouch-7b27e.appspot.com",
+      messagingSenderId: "782989749565",
+      appId: "1:782989749565:web:f462c480791ff2ef9ea954"
+    };
+
+    initializeApp(firebaseConfig);
+    const auth = getAuth();
+    let appVerifier;
+    let confirmationCodeResult;
   
-  const firebaseConfig = {
-    apiKey: "",
-    authDomain: "portaltouch-7b27e.firebaseapp.com",
-    projectId: "portaltouch-7b27e",
-    storageBucket: "portaltouch-7b27e.appspot.com",
-    messagingSenderId: "782989749565",
-    appId: "1:782989749565:web:f462c480791ff2ef9ea954"
-  };
+    const phone_user = () => {
+      const phoneNumber= document.getElementById("phone").value.replace(/^09/,"+8869");
 
-  initializeApp(firebaseConfig);
-  const auth = getAuth();
-  let appVerifier;
-  let confirmationCodeResult;
- 
-  const phone_user = () => {
-    const phoneNumber= document.getElementById("phone").value.replace(/^09/,"+8869");
+      if (appVerifier === undefined){
+        appVerifier = new RecaptchaVerifier('recaptcha-container', {
+          'size': 'invisible',
+          'callback': (response) => {
+            console.log(response);
+            // reCAPTCHA solved, allow signInWithPhoneNumber.
+            // ...
+          },
+          'expired-callback': () => {
+            // Response expired. Ask user to solve reCAPTCHA again.
+            // ...
+          }
+        }, auth);
+      }
 
-    if (appVerifier === undefined){
-      appVerifier = new RecaptchaVerifier('recaptcha-container', {
-        'size': 'invisible',
-        'callback': (response) => {
+      signInWithPhoneNumber(auth, phoneNumber, appVerifier)
+        .then((confirmationResult) => {
+          // SMS sent. Prompt user to type the code from the message, then sign the
+          // user in with confirmationResult.confirm(code).
+          confirmationCodeResult = confirmationResult;
+          console.log(confirmationResult);
+          // ...
+        }).catch((error) => {
+          // Error; SMS not sent
+          console.log(error);
+        });
+    };
+    
+    const verify_code = async () => { 
+      const code = document.getElementById("code").value;
+
+      var result = await confirmationCodeResult.confirm(code);
+      
+      console.log(result.user.accessToken);
+
+      let token = result.user.accessToken;
+      //token = "eyJhbGciOiJSUzI1NiIsImtpZCI6IjFkMmE2YTZhNDcyYWNhNjNmM2FmNzU2NjIxZjM0Njg2OTI1YjUxYTgiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vcG9ydGFsdG91Y2gtN2IyN2UiLCJhdWQiOiJwb3J0YWx0b3VjaC03YjI3ZSIsImF1dGhfdGltZSI6MTY0MTQ0NzE3MCwidXNlcl9pZCI6InJ0aHZWNW94Q1llYk1SbWJiVDJhTnQwcFN3MjMiLCJzdWIiOiJydGh2VjVveENZZWJNUm1iYlQyYU50MHBTdzIzIiwiaWF0IjoxNjQxNDQ3MTcwLCJleHAiOjE2NDE0NTA3NzAsInBob25lX251bWJlciI6Iis4ODY5MTE3NTc2ODUiLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7InBob25lIjpbIis4ODY5MTE3NTc2ODUiXX0sInNpZ25faW5fcHJvdmlkZXIiOiJwaG9uZSJ9fQ.mwkXnHgpx3icBpipMQ8bhWr0yWrDMgvvEJIRILYCqBT18G9rz9a195Pg5SyCSg3Zj6BjbVONT4DKS8kLMg88KJvDkaV1ThLyFr6sCJeuXmJjnNzKwy-mBrmZOyYDV-r7fMnBM9-ETdBK1uL59eXVGbtUIcpUNgIO5VxcV-9DiH9TCUFxN786avhflziK94J1HV58-OkA8uwSyCr6DWo2LWImwx0rV8vc3RRr4HHF8duesBHUDbdgyYvaINkWodtDKUoUAoCt7vat7v_qx6GmbdQDZBcY-aMggKwo4Xt8CkEMT_qFASXS-D4nEmurUvFmG7PiMcYM-a7WT5jwboUq5w";
+
+      const line_profile = liff.getProfile();
+
+      console.log(line_profile);
+
+      // send request to server
+      axios.get(`/verify/code?token=${token}&line_id=${line_profile.user_id}`)
+        .then(function (response) {
+          // handle success
           console.log(response);
-          // reCAPTCHA solved, allow signInWithPhoneNumber.
-          // ...
-        },
-        'expired-callback': () => {
-          // Response expired. Ask user to solve reCAPTCHA again.
-          // ...
-        }
-      }, auth);
+        })
+        .catch(function (error) {
+          // handle error
+          console.log(error);
+        })
+        .then(function () {
+          // always executed
+        });
     }
 
-    signInWithPhoneNumber(auth, phoneNumber, appVerifier)
-      .then((confirmationResult) => {
-        // SMS sent. Prompt user to type the code from the message, then sign the
-        // user in with confirmationResult.confirm(code).
-        confirmationCodeResult = confirmationResult;
-        console.log(confirmationResult);
-        // ...
-      }).catch((error) => {
-        // Error; SMS not sent
-        console.log(error);
-      });
-  };
-  
-  const verify_code = async () =>{
-    const code = document.getElementById("code").value;
-
-    var result = await confirmationCodeResult.confirm(code);
-    
-    console.log(result.user.accessToken);
-
-    // send request to server
-    const axios = require('axios').default;
-
-    axios.get(`/verify/code?token=${result.user.accessToken}`)
-      .then(function (response) {
-        // handle success
-        console.log(response);
-      })
-      .catch(function (error) {
-        // handle error
-        console.log(error);
-      })
-      .then(function () {
-        // always executed
-      });
-  }
-
-  window.phone_user = phone_user;
-  window.verify_code = verify_code;
-
-  export { phone_user, verify_code }
+    window.phone_user = phone_user;
+    window.verify_code = verify_code;
+    // Start to use liff's api
+    export { phone_user, verify_code }
+  });
 </script>
 
 {% endblock %}
